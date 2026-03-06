@@ -1,0 +1,8 @@
+[project]
+name = "cohere"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "mpi4py>=4.1.1",
+    "pyzmq>=27.1.0",
+]
