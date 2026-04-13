@@ -5,6 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "h5py>=3.16.0",
+    "hdf5plugin>=6.0.0",
+    "matplotlib>=3.10.8",
     "torch>=2.10.0",
 ]
 
