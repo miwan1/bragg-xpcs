@@ -5,6 +5,7 @@ Set your filepath below, then comment/uncomment the steps you want to run.
 """
 
 from pathlib import Path
+import platform
 
 from load_data import main as load_data_summary
 from plot_data import (
@@ -16,11 +17,17 @@ from plot_data import (
 )
 
 # ── Set your file path here ────────────────────────────────────────────────
-FILEPATH = Path(
-    "/Volumes/shpyrkogroup/2024_11_APSU_XPCS_NBH10"
-    "/APSU_1004574_shpyrko_202411"
-    "/A344_NaBH_att000020_329K_001"
-    "/A344_NaBH_att000020_329K_001_001.h5"
+if platform.system() == "Windows":
+    FILEPATH = Path(
+        r"C:\Users\Andy Wan\Desktop\APSU_1004574_shpyrko_202411"
+        r"\A344_NaBH_att000020_329K_001\A344_NaBH_att000020_329K_001_001.h5"
+    )
+else:
+    FILEPATH = Path(
+        "/Volumes/shpyrkogroup/2024_11_APSU_XPCS_NBH10"
+        "/APSU_1004574_shpyrko_202411"
+        "/A344_NaBH_att000020_329K_001"
+        "/A344_NaBH_att000020_329K_001_001.h5"
 )
 DATA_PATH = None  # HDF5 internal path (None = auto-detect)
 
@@ -32,7 +39,7 @@ if __name__ == "__main__":
 
     # Choose which plots to generate (comment out any you don't need):
     show_mean_scattering(FILEPATH, DATA_PATH)
-    show_single_frame(FILEPATH, DATA_PATH, frame_idx=1500)
+    # show_single_frame(FILEPATH, DATA_PATH, frame_idx=1500)
     # show_intensity_timeseries(FILEPATH, DATA_PATH)
     # show_intensity_histogram(FILEPATH, DATA_PATH, frame_idx=1500)
 
