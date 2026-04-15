@@ -19,6 +19,7 @@ Usage:
 import sys
 from pathlib import Path
 
+import platform
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -31,11 +32,19 @@ from load_data import (
 )
 
 # ── Default file path (edit as needed) ──────────────────────────────────────
-DEFAULT_H5_PATH = Path(
-    r"C:\Users\Andy Wan\Desktop\APSU_1004574_shpyrko_202411"
-    r"\A344_NaBH_att000020_329K_001\A344_NaBH_att000020_329K_001_001.h5"
-)
-
+if platform.system() == "Windows":
+    DEFAULT_H5_PATH = Path(
+        r"C:\Users\Andy Wan\Desktop\APSU_1004574_shpyrko_202411"
+        r"\A344_NaBH_att000020_329K_001\A344_NaBH_att000020_329K_001_001.h5"
+    )
+else:
+    # macOS / Linux — mounted network volume
+    DEFAULT_H5_PATH = Path(
+        "/Volumes/shpyrkogroup/2024_11_APSU_XPCS_NBH10"
+        "/APSU_1004574_shpyrko_202411"
+        "/A344_NaBH_att000020_329K_001"
+        "/A344_NaBH_att000020_329K_001_001.h5"
+    )
 
 def plot_mean_scattering(ax, mean_img: np.ndarray) -> None:
     """Log-scale image of the average scattering pattern."""
@@ -94,30 +103,108 @@ def plot_intensity_histogram(ax, frame: np.ndarray) -> None:
     ax.grid(True, alpha=0.25, which="both")
 
 
-def main():
-    filepath = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_H5_PATH
-    data_path = sys.argv[2] if len(sys.argv) > 2 else None
+# ── Standalone convenience functions ────────────────────────────────────────
+# Each one loads the required data, creates its own figure, and shows it.
+# Call these from main.py or a notebook to plot one thing at a time.
 
-    # ── 1. Mean scattering (chunked, memory-safe) ──────────────────────────
+def show_mean_scattering(filepath=None, data_path=None):
+    """Compute and display the mean scattering pattern."""
+    if filepath is None:
+        filepath = DEFAULT_H5_PATH
+    filepath = Path(filepath)
+
+    print(f"Computing mean scattering pattern from: {filepath}")
+    mean_img = compute_mean_scattering(filepath, data_path=data_path)
+
+    plt.style.use("dark_background")
+    fig, ax = plt.subplots(figsize=(8, 6))
+    fig.suptitle(f"{filepath.stem} — Mean Scattering", fontsize=14, fontweight="bold")
+    plot_mean_scattering(ax, mean_img)
+    fig.tight_layout()
+    plt.show()
+    return mean_img
+
+
+def show_single_frame(filepath=None, data_path=None, frame_idx=0):
+    """Load and display a single detector frame."""
+    if filepath is None:
+        filepath = DEFAULT_H5_PATH
+    filepath = Path(filepath)
+
+    print(f"Loading frame #{frame_idx} from: {filepath}")
+    sample = load_frames(filepath, data_path=data_path,
+                         begin_frame=frame_idx, end_frame=frame_idx + 1)
+    frame = sample[0]
+
+    plt.style.use("dark_background")
+    fig, ax = plt.subplots(figsize=(8, 6))
+    fig.suptitle(f"{filepath.stem} — Frame #{frame_idx}", fontsize=14, fontweight="bold")
+    plot_single_frame(ax, frame, frame_idx=frame_idx)
+    fig.tight_layout()
+    plt.show()
+    return frame
+
+
+def show_intensity_timeseries(filepath=None, data_path=None):
+    """Compute and display the per-frame intensity time series."""
+    if filepath is None:
+        filepath = DEFAULT_H5_PATH
+    filepath = Path(filepath)
+
+    print(f"Computing per-frame intensity from: {filepath}")
+    totals = compute_frame_totals(filepath, data_path=data_path)
+
+    plt.style.use("dark_background")
+    fig, ax = plt.subplots(figsize=(10, 4))
+    fig.suptitle(f"{filepath.stem} — Intensity Time Series", fontsize=14, fontweight="bold")
+    plot_intensity_timeseries(ax, totals)
+    fig.tight_layout()
+    plt.show()
+    return totals
+
+
+def show_intensity_histogram(filepath=None, data_path=None, frame_idx=0):
+    """Load a frame and display its intensity histogram."""
+    if filepath is None:
+        filepath = DEFAULT_H5_PATH
+    filepath = Path(filepath)
+
+    print(f"Loading frame #{frame_idx} for histogram from: {filepath}")
+    sample = load_frames(filepath, data_path=data_path,
+                         begin_frame=frame_idx, end_frame=frame_idx + 1)
+    frame = sample[0]
+
+    plt.style.use("dark_background")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    fig.suptitle(f"{filepath.stem} — Intensity Histogram (frame #{frame_idx})",
+                 fontsize=14, fontweight="bold")
+    plot_intensity_histogram(ax, frame)
+    fig.tight_layout()
+    plt.show()
+    return frame
+
+
+def show_all(filepath=None, data_path=None, frame_idx=1500):
+    """Produce the combined 2×2 diagnostic figure (all four plots)."""
+    if filepath is None:
+        filepath = DEFAULT_H5_PATH
+    filepath = Path(filepath)
+
     print(f"Loading data from: {filepath}")
     print("Computing mean scattering pattern (chunked) …")
     mean_img = compute_mean_scattering(filepath, data_path=data_path)
     print(f"  Mean pattern: shape={mean_img.shape}")
 
-    # ── 2. Load a single frame for the snapshot + histogram ────────────────
-    mid_idx = 1500  # middle of the 3000-frame dataset
-    print(f"Loading single frame #{mid_idx} …")
+    print(f"Loading single frame #{frame_idx} …")
     sample = load_frames(filepath, data_path=data_path,
-                         begin_frame=mid_idx, end_frame=mid_idx + 1)
+                         begin_frame=frame_idx, end_frame=frame_idx + 1)
     single_frame = sample[0]
     print(f"  Frame shape: {single_frame.shape}")
 
-    # ── 3. Per-frame totals (chunked, no full load) ────────────────────────
     print("Computing per-frame intensity totals (chunked) …")
     totals = compute_frame_totals(filepath, data_path=data_path)
     print(f"  {len(totals)} frames processed")
 
-    # ── Build the 2×2 figure ───────────────────────────────────────────────
     plt.style.use("dark_background")
     fig = plt.figure(figsize=(16, 12))
     fig.suptitle(
@@ -134,7 +221,7 @@ def main():
     plot_mean_scattering(ax1, mean_img)
 
     ax2 = fig.add_subplot(gs[0, 1])
-    plot_single_frame(ax2, single_frame, frame_idx=mid_idx)
+    plot_single_frame(ax2, single_frame, frame_idx=frame_idx)
 
     ax3 = fig.add_subplot(gs[1, 0])
     plot_intensity_timeseries(ax3, totals)
@@ -144,7 +231,6 @@ def main():
 
     fig.subplots_adjust(top=0.93, bottom=0.07, left=0.07, right=0.95)
 
-    # Save and show
     out_dir = filepath.parent
     out_path = out_dir / f"{filepath.stem}_plots.png"
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
@@ -153,5 +239,14 @@ def main():
     plt.show()
 
 
+# Keep old main() as an alias for show_all
+def main(filepath=None, data_path=None):
+    """Legacy entry point — calls show_all()."""
+    show_all(filepath, data_path)
+
+
 if __name__ == "__main__":
-    main()
+    _filepath = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    _data_path = sys.argv[2] if len(sys.argv) > 2 else None
+    main(_filepath, _data_path)
+

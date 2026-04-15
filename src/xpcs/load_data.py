@@ -13,6 +13,7 @@ Usage:
     python load_data.py path/to/file.h5 /my/path   # custom file + dataset path
 """
 
+import platform
 import sys
 from pathlib import Path
 
@@ -21,10 +22,19 @@ import hdf5plugin          # registers blosc / bitshuffle filters
 import numpy as np
 
 # ── Default file path (edit as needed) ──────────────────────────────────────
-DEFAULT_H5_PATH = Path(
-    r"C:\Users\Andy Wan\Desktop\APSU_1004574_shpyrko_202411"
-    r"\A344_NaBH_att000020_329K_001\A344_NaBH_att000020_329K_001_001.h5"
-)
+if platform.system() == "Windows":
+    DEFAULT_H5_PATH = Path(
+        r"C:\Users\Andy Wan\Desktop\APSU_1004574_shpyrko_202411"
+        r"\A344_NaBH_att000020_329K_001\A344_NaBH_att000020_329K_001_001.h5"
+    )
+else:
+    # macOS / Linux — mounted network volume
+    DEFAULT_H5_PATH = Path(
+        "/Volumes/shpyrkogroup/2024_11_APSU_XPCS_NBH10"
+        "/APSU_1004574_shpyrko_202411"
+        "/A344_NaBH_att000020_329K_001"
+        "/A344_NaBH_att000020_329K_001_001.h5"
+    )
 
 
 # ── dtype conversion (mirrors HdfDataset.__init__) ─────────────────────────
@@ -219,10 +229,12 @@ def compute_frame_totals(
     return np.concatenate(totals)
 
 
-# ── CLI ─────────────────────────────────────────────────────────────────────
-def main():
-    filepath = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_H5_PATH
-    data_path = sys.argv[2] if len(sys.argv) > 2 else None
+# ── CLI / programmatic entry point ──────────────────────────────────────────
+def main(filepath=None, data_path=None):
+    """Run a quick data summary.  Can be called from another module or the CLI."""
+    if filepath is None:
+        filepath = DEFAULT_H5_PATH
+    filepath = Path(filepath)
 
     print(f"Loading data from: {filepath}")
 
@@ -248,4 +260,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _filepath = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    _data_path = sys.argv[2] if len(sys.argv) > 2 else None
+    main(_filepath, _data_path)
