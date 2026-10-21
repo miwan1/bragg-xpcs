@@ -7,6 +7,7 @@ import logging
 from .xpcs_dataset import XpcsDataset
 from ..utils import sum_frames_parallel 
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -350,11 +351,11 @@ class XpcsDataset(object):
 
         return x
 
-def sum_frames_parallel(
-    file_path,
-    dataset_name="/entry/data/data",
-    start_frame=0,
-    num_frames=-1,
-    chunk_size=32,
-    num_processes=None,
-):
+# def sum_frames_parallel(
+#     file_path,
+#     dataset_name="/entry/data/data",
+#     start_frame=0,
+#     num_frames=-1,
+#     chunk_size=32,
+#     num_processes=None,
+# )
